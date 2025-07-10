@@ -155,7 +155,13 @@ def validate_workflow(workflow):
     return True
 
 def start_comfyui_server():
-    global server_process; cmd = ["python", "main.py", "--listen", "--port", "8188"]; server_process = subprocess.Popen(cmd)
+    global server_process
+    cmd = ["python", "main.py", "--listen", "--port", "8188"]
+    # Explicitly pass environment variables to ComfyUI subprocess
+    env = os.environ.copy()
+    print(f"[COMFYUI_START] Starting ComfyUI with AUTH_TOKEN_COMFY_ORG: {'SET' if env.get('AUTH_TOKEN_COMFY_ORG') else 'NOT SET'}")
+    print(f"[COMFYUI_START] Starting ComfyUI with API_KEY_COMFY_ORG: {'SET' if env.get('API_KEY_COMFY_ORG') else 'NOT SET'}")
+    server_process = subprocess.Popen(cmd, env=env)
 
 def wait_for_server_ready():
     global comfyui_started
@@ -239,6 +245,8 @@ def run_workflow(workflow):
     # DEBUG: Print authentication status for troubleshooting
     print(f"[AUTH_DEBUG] AUTH_TOKEN_COMFY_ORG: {'SET (' + auth_token[:20] + '...)' if auth_token else 'NOT SET OR EMPTY'}")
     print(f"[AUTH_DEBUG] API_KEY_COMFY_ORG: {'SET (' + api_key[:20] + '...)' if api_key else 'NOT SET OR EMPTY'}")
+    print(f"[AUTH_DEBUG] All environment variables: {list(os.environ.keys())}")
+    print(f"[AUTH_DEBUG] Comfy-related env vars: {[(k, v[:20] + '...' if len(v) > 20 else v) for k, v in os.environ.items() if 'COMFY' in k.upper()]}")
     
     if auth_token:
         extra_data["auth_token_comfy_org"] = auth_token
